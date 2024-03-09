@@ -276,8 +276,7 @@
         "y": 440,
         "wires": [
             [
-                "ed326b4a12b43e3e",
-                "c5b96f131582df23"
+                "ed326b4a12b43e3e"
             ]
         ]
     },
@@ -294,7 +293,7 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1150,
+        "x": 1170,
         "y": 500,
         "wires": []
     },
@@ -307,43 +306,6 @@
         "x": 140,
         "y": 200,
         "wires": []
-    },
-    {
-        "id": "c5b96f131582df23",
-        "type": "switch",
-        "z": "45e9f6449572fac6",
-        "name": "",
-        "property": "flow",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "eq",
-                "v": "CA",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "LOCAL",
-                "vt": "str"
-            },
-            {
-                "t": "eq",
-                "v": "GLOBAL",
-                "vt": "str"
-            }
-        ],
-        "checkall": "false",
-        "repair": false,
-        "outputs": 3,
-        "x": 1370,
-        "y": 440,
-        "wires": [
-            [],
-            [],
-            [
-                "67b42c0dec7df42d"
-            ]
-        ]
     },
     {
         "id": "8b40c971ecc30677",
@@ -359,23 +321,6 @@
         "statusType": "auto",
         "x": 1470,
         "y": 280,
-        "wires": []
-    },
-    {
-        "id": "67b42c0dec7df42d",
-        "type": "debug",
-        "z": "45e9f6449572fac6",
-        "name": "debug 140",
-        "active": false,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": true,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "topic",
-        "statusType": "msg",
-        "x": 1550,
-        "y": 520,
         "wires": []
     },
     {
