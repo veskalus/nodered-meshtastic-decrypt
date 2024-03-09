@@ -1,0 +1,425 @@
+[
+    {
+        "id": "45e9f6449572fac6",
+        "type": "tab",
+        "label": "Flow 3",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "9ae752fb5e3deb59",
+        "type": "debug",
+        "z": "45e9f6449572fac6",
+        "name": "decrypted packet",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1250,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "09440c7c2eaa1005",
+        "type": "function",
+        "z": "45e9f6449572fac6",
+        "name": "Create IV",
+        "func": "//convert packet id and from field to bytes then convert\n//them to an array for use as the IV\n\nfunction getInt64Bytes(x) {\n  const bytes = Buffer.alloc(8);\n  bytes.writeBigInt64LE(x);\n  return bytes;\n}\n\nvar array_id = getInt64Bytes(BigInt(msg.payload.packet.id));\nvar array_from = getInt64Bytes(BigInt(msg.payload.packet.from))\n\nvar array_list = [array_id, array_from]\n\nmsg.iv = Buffer.concat(array_list)\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 340,
+        "wires": [
+            [
+                "b365cd7eac52ffe2"
+            ]
+        ]
+    },
+    {
+        "id": "8966b4d70ba35165",
+        "type": "function",
+        "z": "45e9f6449572fac6",
+        "name": "convert key",
+        "func": "// convert key to buffer\nvar key_from_base64 = Buffer.from(msg.key, 'base64')\n\nmsg.key = key_from_base64;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 340,
+        "wires": [
+            [
+                "09440c7c2eaa1005"
+            ]
+        ]
+    },
+    {
+        "id": "b365cd7eac52ffe2",
+        "type": "function",
+        "z": "45e9f6449572fac6",
+        "name": "Set enc Payload",
+        "func": "//Convert the encrypted payload to bytes\n\nlet text = msg.payload.packet.encrypted;\n\nlet buffer_text = Buffer.from(text, 'base64')\n\nmsg.encrypted_payload = {};\nmsg.encrypted_payload.bytes = buffer_text;\nmsg.encrypted_payload.string = text;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 880,
+        "y": 340,
+        "wires": [
+            [
+                "b29c560213ce9c46"
+            ]
+        ]
+    },
+    {
+        "id": "b29c560213ce9c46",
+        "type": "function",
+        "z": "45e9f6449572fac6",
+        "name": "decrypt",
+        "func": "//perform the actual deccryption\n\n//128 for the default key\nconst algorithm = 'aes-128-ctr'; \n\n//const algorithm = 'aes-256-ctr';\n\nfunction decrypt(text,iv,key) {\n\n    let encryptedText = text;\n\n    let decipher = crypto.createDecipheriv(algorithm, key, iv);\n    let decrypted = decipher.update(encryptedText);\n    decrypted = Buffer.concat([decrypted, decipher.final()]);\n\n    msg.decrypted_payload.bytes = decrypted;\n\n    return decrypted.toString();\n}\n\nlet encrypted_text = msg.encrypted_payload.bytes;\nlet iv = msg.iv;\nlet key = msg.key;\n\nmsg.decrypted_payload = {}\nmsg.decrypted_payload.text = decrypt(encrypted_text,iv,key)\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "crypto",
+                "module": "crypto"
+            }
+        ],
+        "x": 1060,
+        "y": 340,
+        "wires": [
+            [
+                "9ae752fb5e3deb59",
+                "ff2ccbcde41fa170"
+            ]
+        ]
+    },
+    {
+        "id": "f30a993d4279f9c9",
+        "type": "decode",
+        "z": "45e9f6449572fac6",
+        "name": "",
+        "protofile": "ddba2ae36cef6489",
+        "protoType": "Data",
+        "x": 1440,
+        "y": 340,
+        "wires": [
+            [
+                "fe08b97a6882a961",
+                "5b20951948224475"
+            ]
+        ]
+    },
+    {
+        "id": "c9ee5501f31f7739",
+        "type": "switch",
+        "z": "45e9f6449572fac6",
+        "name": "Default Channel Only",
+        "property": "payload.channelId",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "LongFast",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "LongSlow",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "VeryLongSlow",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "MediumSlow",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "MediumFast",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "ShortFast",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "ShortSlow",
+                "vt": "str"
+            }
+        ],
+        "checkall": "false",
+        "repair": false,
+        "outputs": 7,
+        "x": 160,
+        "y": 340,
+        "wires": [
+            [
+                "f5af5ea95a4ed34b"
+            ],
+            [
+                "f5af5ea95a4ed34b"
+            ],
+            [
+                "f5af5ea95a4ed34b"
+            ],
+            [
+                "f5af5ea95a4ed34b"
+            ],
+            [
+                "f5af5ea95a4ed34b"
+            ],
+            [
+                "f5af5ea95a4ed34b"
+            ],
+            [
+                "f5af5ea95a4ed34b"
+            ]
+        ]
+    },
+    {
+        "id": "ff2ccbcde41fa170",
+        "type": "function",
+        "z": "45e9f6449572fac6",
+        "name": "Prep for decode",
+        "func": "\n// Grab channel Hash\n//   /*\n//    * (Usually) If set, this indicates the index in the secondary_channels table that this packet was sent/received on.\n//    * If unset, packet was on the primary channel.\n//    * A particular node might know only a subset of channels in use on the mesh.\n//    * Therefore channel_index is inherently a local concept and meaningless to send between nodes.\n//    * Very briefly, while sending and receiving deep inside the device Router code, this field instead\n//    * contains the 'channel hash' instead of the index.\n//    * This 'trick' is only used while the payload_variant is an 'encrypted'.\n//    */\n\nif (typeof msg.payload.packet.channel !== 'undefined') {\n    if (typeof msg.payload.packet.channel === 'number') {\n        msg.tags.channel_hash = msg.payload.packet.channel;\n    };\n};\n\n// Set payload to be decoded by protobuf decoder\n\nmsg.payload = {};\nmsg.payload = msg.decrypted_payload.bytes;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1240,
+        "y": 340,
+        "wires": [
+            [
+                "f30a993d4279f9c9",
+                "8b40c971ecc30677"
+            ]
+        ]
+    },
+    {
+        "id": "fe08b97a6882a961",
+        "type": "debug",
+        "z": "45e9f6449572fac6",
+        "name": "decoded encrypted packet",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1720,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "5b20951948224475",
+        "type": "function",
+        "z": "45e9f6449572fac6",
+        "name": "Cleanup and format decoded packet",
+        "func": "//ensure we have correctly decoded data packet\n\nmsg.decoded = false;\n\nif (typeof msg.payload.portnum !== 'undefined') {\n    if (typeof msg.payload.portnum === 'string') {\n        if (typeof msg.payload.payload !== 'undefined') {\n            if (typeof msg.payload.payload === 'string') {\n                msg.payload.packet = {};\n                msg.payload.packet.decoded = {};\n                msg.payload.packet.decoded.portnum = msg.payload.portnum;\n                msg.payload.packet.decoded.payload = msg.payload.payload;\n                delete msg.payload.portnum;\n                delete msg.payload.payload;\n                msg.decoded = true;\n            };\n        };\n    };\n};\n\n// Cleanup encryption  data\n\ndelete msg.iv;\ndelete msg.key;\ndelete msg.encrypted_payload;\ndelete msg.decrypted_payload;\ndelete msg.protobufType;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 440,
+        "wires": [
+            [
+                "baff044025d3f42d"
+            ]
+        ]
+    },
+    {
+        "id": "baff044025d3f42d",
+        "type": "switch",
+        "z": "45e9f6449572fac6",
+        "name": "successfully decoded?",
+        "property": "decoded",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 1140,
+        "y": 440,
+        "wires": [
+            [
+                "ed326b4a12b43e3e",
+                "c5b96f131582df23"
+            ]
+        ]
+    },
+    {
+        "id": "ed326b4a12b43e3e",
+        "type": "debug",
+        "z": "45e9f6449572fac6",
+        "name": "debug 138",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1150,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "e6de1aa5dedd8f5d",
+        "type": "comment",
+        "z": "45e9f6449572fac6",
+        "name": "DECRYPTION FLOW",
+        "info": "",
+        "x": 140,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "c5b96f131582df23",
+        "type": "switch",
+        "z": "45e9f6449572fac6",
+        "name": "",
+        "property": "flow",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "CA",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "LOCAL",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "GLOBAL",
+                "vt": "str"
+            }
+        ],
+        "checkall": "false",
+        "repair": false,
+        "outputs": 3,
+        "x": 1370,
+        "y": 440,
+        "wires": [
+            [],
+            [],
+            [
+                "67b42c0dec7df42d"
+            ]
+        ]
+    },
+    {
+        "id": "8b40c971ecc30677",
+        "type": "debug",
+        "z": "45e9f6449572fac6",
+        "name": "debug 139",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1470,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "67b42c0dec7df42d",
+        "type": "debug",
+        "z": "45e9f6449572fac6",
+        "name": "debug 140",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "topic",
+        "statusType": "msg",
+        "x": 1550,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "f5af5ea95a4ed34b",
+        "type": "change",
+        "z": "45e9f6449572fac6",
+        "name": "default key",
+        "rules": [
+            {
+                "t": "set",
+                "p": "key",
+                "pt": "msg",
+                "to": "1PG7OiApB1nwvP+rz05pAQ==",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 370,
+        "y": 340,
+        "wires": [
+            [
+                "8966b4d70ba35165"
+            ]
+        ]
+    },
+    {
+        "id": "4353f2acb79ab1bd",
+        "type": "comment",
+        "z": "45e9f6449572fac6",
+        "name": "Provide a protobuf decoded packet, ie from \"ServiceEnvelope\"",
+        "info": "",
+        "x": 260,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "ddba2ae36cef6489",
+        "type": "protobuf-file",
+        "protopath": "/data/meshtastic-2222/mesh.proto,/data/meshtastic-2222/channel.proto,/data/meshtastic-2222/config.proto,/data/meshtastic-2222/module_config.proto,/data/meshtastic-2222/portnums.proto,/data/meshtastic-2222/telemetry.proto",
+        "watchFile": true,
+        "keepCase": false
+    }
+]
